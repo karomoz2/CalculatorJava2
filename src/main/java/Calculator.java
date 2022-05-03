@@ -1,89 +1,104 @@
-import java.util.*;
+import java.io.InputStream;
+import java.util.Scanner;
+import java.util.Vector;
 
 public class Calculator {
-    // A utility function to return
-    // precedence of a given operator
-    // Higher returned value means
-    // higher precedence
-    static int Prec(char ch)
+
+    private Scanner scanner;
+    public Calculator()
     {
-        switch (ch)
-        {
-            case '+':
-            case '-':
-                return 1;
-
-            case '*':
-            case '/':
-                return 2;
-
-            case '^':
-                return 3;
-        }
-        return -1;
+        scanner= new Scanner(System.in);
+    }
+    public Calculator(InputStream input)
+    {
+        this.scanner=new Scanner(input);
     }
 
-    // The main method that converts
-    // given infix expression
-    // to postfix expression.
-    static String infixToPostfix(String exp)
-    {
-        // initializing empty String for result
-        String result = new String("");
+    int priority(char op) { //приоритет знаков операции
+       int b=-1;
+       if (op == '+' || op == '-') b=1;
+       else if (op == '*' || op == '/' || op == '%') b=2;
+        return b;
 
-        // initializing empty stack
-        Stack<Character> stack = new Stack<>();
+    }
 
-        for (int i = 0; i<exp.length(); ++i)
+    void doOper(Vector<Integer> opNds, char opNs) {  //выполненяет операцию
+        int r = opNds.lastElement();
+        opNds.remove(opNds.size() - 1);
+        int l = opNds.lastElement();
+        opNds.remove(opNds.size() - 1);
+        int res;
+
+        switch (opNs) {
+            case '+' : opNds.add(l + r); break;
+            case '-' : opNds.add(l - r); break;
+            case '*' : opNds.add(l * r); break;
+            case '/' : opNds.add(l / r); break;
+            case '%' : opNds.add(l % r); break;
+        }
+    }
+
+    public int calculation(String data) { //алгоритм перевода из инфиксной в постфиксную форму
+        Vector<Character> operatioNs = new Vector<>(); //операции
+        Vector<Integer> operanDs = new Vector<>(); //операнды
+
+        for (int i = 0; i < data.length(); ++i)
         {
-            char c = exp.charAt(i);
-
-            // If the scanned character is an
-            // operand, add it to output.
-            if (Character.isLetterOrDigit(c))
-                result += c;
-
-                // If the scanned character is an '(',
-                // push it to the stack.
-            else if (c == '(')
-                stack.push(c);
-
-                //  If the scanned character is an ')',
-                // pop and output from the stack
-                // until an '(' is encountered.
-            else if (c == ')')
+            if (data.charAt(i)!=' ')
             {
-                while (!stack.isEmpty() &&
-                        stack.peek() != '(')
-                    result += stack.pop();
-
-                stack.pop();
-            }
-            else // an operator is encountered
-            {
-                while (!stack.isEmpty() && Prec(c)
-                        <= Prec(stack.peek())){
-
-                    result += stack.pop();
+                //Блок выполнения операций, заключенных в скобках
+                if (data.charAt(i) == '(') //В вектор операций добавляетсяся откр-ся скобка, если такова имеется
+                    operatioNs.add('(');
+                else if (data.charAt(i) == ')')
+                { //Выполняем операции до открывающей скобки и очищаем вектор операций
+                    while (operatioNs.lastElement() != '(') {
+                        doOper(operanDs, operatioNs.lastElement());
+                        operatioNs.remove(operatioNs.size() - 1);
+                    }
+                    operatioNs.remove(operanDs.size() - 1); //Удаляем открывающуюся скобку
                 }
-                stack.push(c);
+
+
+                //Блок выполнения операций без скобок
+                else if (data.charAt(i) == '+' || data.charAt(i) == '-' || data.charAt(i) == '*' || data.charAt(i) == '/' || data.charAt(i) == '%' )
+                {//Проверяем на знак операции
+                    char curOper = data.charAt(i); //Текущая операция
+                    while (!operatioNs.isEmpty() && priority(operatioNs.lastElement()) >= priority(data.charAt(i)))
+                    {
+                        //Пока не встретили операцию с большим приоритетом - выполняем операции и подчищаем
+                        doOper(operanDs, operatioNs.lastElement());
+                        operatioNs.remove(operanDs.size() - 1);
+                    }
+                    operatioNs.add(curOper);
+                }
+                else
+                {
+                    StringBuilder operand = new StringBuilder();
+                    while (i < data.length() && (Character.isLetter(data.charAt(i)) || Character.isDigit(data.charAt(i)))) //Если встретился операнд
+                        operand.append(data.charAt(i++));
+                    --i;
+                    if (Character.isDigit(operand.charAt(0)))
+                        operanDs.add(Integer.valueOf(operand.toString()));
+                    else
+                    {
+                        var tmp = getVariable(operand.toString(), data); //вводим операнд
+                        i += tmp.length() - operand.length();
+                        data = data.replace(operand.toString(), tmp);
+                        operanDs.add(Integer.valueOf(tmp));
+                    }
+                }
             }
-
         }
-
-        // pop all the operators from the stack
-        while (!stack.isEmpty()){
-            if(stack.peek() == '(')
-                return "Invalid Expression";
-            result += stack.pop();
+        while (!operatioNs.isEmpty()) { //выполняем все операции из вектора операций
+            doOper(operanDs, operatioNs.lastElement());
+            operatioNs.remove(operanDs.size() - 1);
         }
-        return result;
+        return operanDs.lastElement(); //последнее значение, является решением
+
     }
 
-    // Driver method
-    public static void main(String[] args)
-    {
-        String exp = "a+b*(c^d-e)^(f+g*h)-i";
-        System.out.println(infixToPostfix(exp));
+    private String getVariable(String operand,String s) {
+        System.out.println("Введите значение "+ operand + " :");
+        return scanner.nextLine();
     }
 }
