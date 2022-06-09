@@ -60,6 +60,7 @@ public class Calculator {
                 if (rpn.charAt(i)=='-')stack.push(b-a);
                 if (rpn.charAt(i)=='*')stack.push(b*a);
                 if (rpn.charAt(i)=='/')stack.push(b/a);
+                if (rpn.charAt(i) == '%') stack.push(b%a);
             }
         }
 
@@ -68,10 +69,10 @@ public class Calculator {
 
     private static int GetPriority(char token)
     {
-        if(token=='*'|| token=='/')          return 3;
-        else if (token =='+' || token =='-') return 2;
-        else if (token == '(')               return 1;
-        else if (token ==')')                return -1;
+        if(token=='*'|| token=='/' || token =='%')          return 3;
+        else if (token =='+' || token =='-')                return 2;
+        else if (token == '(')                              return 1;
+        else if (token ==')')                               return -1;
         else return 0;
     }
 
