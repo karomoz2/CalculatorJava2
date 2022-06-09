@@ -2,7 +2,7 @@ import java.util.Stack;
 
 public class Calculator {
 
-    public static String ExptoRPolish(String expr){
+    private static String ExpToRPolish(String expr){ //перевод в обратную польскую нотацию (RPN)
        String cur="";
        Stack<Character> stack = new Stack<>();
        int prior; //Приоритет
@@ -35,9 +35,35 @@ public class Calculator {
         return cur;
     };
 
-    public static double RPolishToResult(String rpn)
+    private static double RPolishToResult(String rpn)
     {
-        return 0;
+        String oper=new String();
+        Stack<Double> stack = new Stack<>();
+
+        for (int i=0; i<rpn.length();i++)
+        {
+            if(rpn.charAt(i)==' ') continue;
+            if (GetPriority(rpn.charAt(i))== 0){
+                while(rpn.charAt(i)!=' ' && GetPriority(rpn.charAt(i))==0)
+                {
+                    oper+=rpn.charAt(i++);
+                if (i==rpn.length()) break;
+                }
+                stack.push(Double.parseDouble(oper));
+                oper=new String();
+            }
+            //Если матем символ попался
+            if (GetPriority(rpn.charAt(i))>1){
+                double a=stack.pop(), b=stack.pop();
+
+                if (rpn.charAt(i)=='+')stack.push(b+a);
+                if (rpn.charAt(i)=='-')stack.push(b-a);
+                if (rpn.charAt(i)=='*')stack.push(b*a);
+                if (rpn.charAt(i)=='/')stack.push(b/a);
+            }
+        }
+
+        return stack.pop();
     }
 
     private static int GetPriority(char token)
@@ -47,6 +73,12 @@ public class Calculator {
         else if (token == '(')               return 1;
         else if (token ==')')                return -1;
         else return 0;
+    }
+
+    public double getResult(String expr){
+        String rpn = ExpToRPolish(expr);
+        return RPolishToResult(rpn);
+
     }
 
 }
